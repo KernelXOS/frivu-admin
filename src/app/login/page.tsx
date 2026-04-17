@@ -29,7 +29,7 @@ export default function LoginPage() {
     setLoading(false);
 
     if (res?.error) {
-      setError("Credenciales incorrectas o no tienes permisos de acceso.");
+      setError("Credenciales incorrectas o no tienes permisos de acceso en la app.");
     } else {
       router.push("/dashboard");
     }
