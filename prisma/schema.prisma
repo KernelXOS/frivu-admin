@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  name         String?
+  email        String       @unique
+  password     String
+  role         Role         @default(PLAYER)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  subscription Subscription?
+  enrollments  Enrollment[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id        String           @id @default(cuid())
+  userId    String           @unique
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      SubscriptionPlan @default(FREE)
+  status    SubStatus        @default(ACTIVE)
+  startsAt  DateTime         @default(now())
+  expiresAt DateTime?
+  createdAt DateTime         @default(now())
+
+  @@map("subscriptions")
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  name        String
+  description String?
+  type        EventType   @default(FREE)
+  status      EventStatus @default(DRAFT)
+  startDate   DateTime
+  endDate     DateTime?
+  maxPlayers  Int?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  enrollments Enrollment[]
+  standings   Standing[]
+
+  @@map("events")
+}
+
+model Enrollment {
+  id        String           @id @default(cuid())
+  userId    String
+  eventId   String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event     Event            @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status    EnrollmentStatus @default(PENDING)
+  createdAt DateTime         @default(now())
+
+  @@unique([userId, eventId])
+  @@map("enrollments")
+}
+
+model Standing {
+  id         String   @id @default(cuid())
+  eventId    String
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  playerName String
+  position   Int
+  points     Int      @default(0)
+  wins       Int      @default(0)
+  losses     Int      @default(0)
+  draws      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("standings")
+}
+
+enum Role {
+  ADMIN
+  MODERATOR
+  PLAYER
+}
+
+enum EventType {
+  FREE
+  PREMIUM
+}
+
+enum EventStatus {
+  DRAFT
+  ACTIVE
+  FINISHED
+  CANCELLED
+}
+
+enum EnrollmentStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum SubStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
